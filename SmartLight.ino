@@ -5,19 +5,21 @@
 #include <time.h>
 #include "secrets.h"
 
-#define TIME_ZONE -5
+#define TIME_ZONE -3
 
 #define LDR A0
-#define LED1 D1
-#define LED2 D2
-#define IR1 D5
-#define IR2 D6
+#define LED1 D2
+#define LED2 D5
+#define IR1 D3
+#define IR2 D1
  
 unsigned long lastMillis = 0;
 unsigned long previousMillis = 0;
 const long period = 5000;
 bool light = false;
 bool light2 = false;
+bool presence1 = false;
+bool presence2 = false;
 unsigned long time_turned_on = 0;
 unsigned long time_turned_on2 = 0;
 int LDRValue = 0;
@@ -116,6 +118,10 @@ void publishMessage()
   StaticJsonDocument<200> doc;
   doc["time"] = millis();
   doc["LDRValue"] = LDRValue;
+  doc["light"] = light;
+  doc["light2"] = light2;
+  doc["presence1"] = presence1;
+  doc["presence2"] = presence2;
   char jsonBuffer[512];
   serializeJson(doc, jsonBuffer); // print to client
  
@@ -140,37 +146,50 @@ void setup()
 void loop()
 {
   LDRValue = analogRead(LDR);
+  presence1 = digitalRead(IR1);
+  presence2 = digitalRead(IR2);
 
-  if (LDRValue > 50) {
+  Serial.print("presence1: ");
+  Serial.println(presence1);
+
+  Serial.print("presence2: ");
+  Serial.println(presence2);
+
+  Serial.print("LDR: ");
+  Serial.println(LDRValue);
+
+  delay(1000);
+
+  if (LDRValue > 90) {
       analogWrite(LED1, 0);
       analogWrite(LED2, 0);
       light = false;
       light2 = false;
   } else {
-    if (digitalRead(IR1) == LOW && light == false) {
+    if (presence1 == HIGH && light == false) {
       light = true;
       time_turned_on = millis();
       analogWrite(LED1, 255);
     } else if (light == false) {
-      analogWrite(LED1, 127);
+      analogWrite(LED1, 63);
     }
 
     if (light == true && millis() - time_turned_on > period) {
       light = false;
-      analogWrite(LED1, 127);
+      analogWrite(LED1, 63);
     }
 
-    if (digitalRead(IR2) == LOW && light2 == false) {
+    if (presence2 == HIGH && light2 == false) {
       light2 = true;
       time_turned_on2 = millis();
       analogWrite(LED2, 255);
     } else if (light == false) {
-      analogWrite(LED2, 127);
+      analogWrite(LED2, 63);
     }
 
     if (light2 == true && millis() - time_turned_on2 > period) {
       light2 = false;
-      analogWrite(LED2, 127);
+      analogWrite(LED2, 63);
     }
   }
  
