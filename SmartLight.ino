@@ -183,7 +183,7 @@ void loop()
       light2 = true;
       time_turned_on2 = millis();
       analogWrite(LED2, 255);
-    } else if (light == false) {
+    } else if (light2 == false) {
       analogWrite(LED2, 63);
     }
 
